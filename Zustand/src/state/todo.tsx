@@ -1,67 +1,35 @@
-import { createContext, FC, ReactNode, useCallback, useContext, useMemo, useState } from "react";
-import { Todo } from "src/types";
+import { Todo } from 'src/types';
+import create from 'zustand'
 
 const TODOS: Todo[] = [
   { id: 1, text: "foo", isDone: false },
   { id: 2, text: "bar", isDone: true },
 ];
 
-// 参照系
-export const TodosContext = createContext(TODOS);
-
-// 更新系
-export const TodosDispatchContext = createContext<{
-  toggleIsDone: (id: Todo["id"]) => void;
+type State = {
+  todos: Todo[];
   addTodo: (text: Todo["text"]) => void;
-}>({
-  toggleIsDone: () => {
-    throw Error("No default value!");
-  },
-  addTodo: () => {
-    throw Error("No default value!");
-  },
-});
+  toggleTodo: (id: Todo["id"]) => void;
+}
 
-export const TodosProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const [todos, setTodos] = useState<Todo[]>(TODOS);
-
-  const toggleIsDone = useCallback((id: Todo["id"]) => {
-    setTodos(prevTodos => {
-      return prevTodos.map(todo => {
-        if (todo.id === id) {
-          return { ...todo, isDone: !todo.isDone }
-        }
-        return todo;
-      })
+export const useStore = create<State>((set) => ({
+  todos: TODOS,
+  addTodo: (text) => {
+    set(state => { // setメソッドで状態を書き換える
+      const newTodo = { id: state.todos.length + 1, text: text, isDone: false };
+      return { todos: [...state.todos, newTodo] }
     });
-  }, []);
-
-
-  const addTodo = useCallback((text: Todo["text"]) => {
-    setTodos(prevTodos => {
-      const newTodo = { id: prevTodos.length + 1, text: text, isDone: false }
-      return [...prevTodos, newTodo]
+  },
+  toggleTodo: (id) => {
+    set(state => {
+      return {
+        todos: state.todos.map(todo => {
+          if (todo.id === id) {
+            return { ...todo, isDone: !todo.isDone }
+          }
+          return todo;
+        })
+      }
     })
-  }, []);
-
-  // メモ化
-  const todosDispatchValue = useMemo(() => {
-    return { toggleIsDone, addTodo };
-  }, [addTodo, toggleIsDone]);
-
-  return (
-    <TodosContext.Provider value={todos}>
-      <TodosDispatchContext.Provider value={todosDispatchValue}>
-        {children}
-      </TodosDispatchContext.Provider>
-    </TodosContext.Provider>
-  );
-}
-
-export const useTodos = () => {
-  return useContext(TodosContext);
-}
-
-export const useTodosDispatch = () => {
-  return useContext(TodosDispatchContext);
-}
+  },
+}));

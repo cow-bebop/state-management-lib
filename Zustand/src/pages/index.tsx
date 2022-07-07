@@ -1,9 +1,9 @@
 import type { NextPage } from "next";
-import { useTodos, useTodosDispatch } from "src/state/todo";
+import { useStore } from "src/state/todo";
 
 const Home: NextPage = () => {
-  const todos = useTodos();
-  const { toggleIsDone } = useTodosDispatch();
+  const todos = useStore((state) => state.todos);
+  const toggleTodo = useStore((state) => state.toggleTodo);
 
   return (
     <div>
@@ -14,7 +14,7 @@ const Home: NextPage = () => {
             <input
               type="checkbox"
               checked={todo.isDone}
-              onChange={() => toggleIsDone(todo.id)}
+              onChange={() => toggleTodo(todo.id)}
             />
             {todo.text}
           </label>
